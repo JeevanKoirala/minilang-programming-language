@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MiniLang Web Compiler</title>
+<style>
+body {
+    font-family: "Fira Code", monospace;
+    margin: 0;
+    padding: 0;
+    background-color: #1e1e2f;
+    color: #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.buttons {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background-color: #2b2b3c;
+}
+
+.buttons button {
+    background-color: #333;
+    color: #80cbc4;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.container {
+    display: flex;
+    flex-grow: 1;
+    height: calc(100vh - 60px);
+}
+
+.editor-section, .output-section {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+textarea, .output {
+    flex-grow: 1;
+    background-color: #2b2b3c;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 4px;
+    padding: 10px;
+    font-size: 14px;
+}
+
+.output {
+    overflow-y: auto;
+    white-space: pre-wrap;
+    font-family: "Courier New", monospace;
+    color: #33ff33;
+    position: relative;
+}
+
+.game-input-container {
+    display: flex;
+    margin-top: 10px;
+}
+
+#outputInput {
+    flex-grow: 1;
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+    padding: 5px;
+}
+</style>
+</head>
+<body>
+<div class="buttons">
+    <button onclick="runCode()">Run</button>
+    <button onclick="clearCode()">Clear</button>
+    <button onclick="showHelp()">Help</button>
+</div>
+<div class="container">
+    <div class="editor-section">
+        <textarea id="code" placeholder="Write your MiniLang code here..."></textarea>
+    </div>
+    <div class="output-section">
+        <div class="output" id="output"></div>
+        <div class="game-input-container">
+            <input type="text" id="outputInput" placeholder="Enter game commands..." onkeypress="handleGameCommand(event)">
+        </div>
+    </div>
+</div>
+<script>
+let gameMode = null; 
+
+function runCode() {
+    const code = document.getElementById("code").value;
+
+    fetch("/run", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.output) {
+            document.getElementById("output").textContent = data.output;
+
+            
+            if (code === "cookie_game" || code === "dark_room") {
+                gameMode = code;
+                document.getElementById("outputInput").style.display = "block";
+            } else {
+                document.getElementById("outputInput").style.display = "none";
+            }
+        } else {
+            document.getElementById("output").textContent = "No output returned.";
+        }
+    })
+    .catch(error => {
+        document.getElementById("output").textContent = "Error: " + error.message;
+    });
+}
+
+function clearCode() {
+    document.getElementById("code").value = "";
+    document.getElementById("output").textContent = "";
+    document.getElementById("outputInput").value = "";
+    document.getElementById("outputInput").style.display = "none";
+    gameMode = null; 
+}
+
+function showHelp() {
+    const helpText = `
+MiniLang Commands:
+- show <string>: Prints text to the output.
+- getinp <prompt>: Gets user input.
+- cookie_game: Starts the cookie baking game.
+- dark_room: Starts the dark room survival game.
+`;
+    document.getElementById("output").textContent = helpText;
+}
+
+function handleGameCommand(event) {
+    if (event.key === "Enter") {
+        const command = event.target.value.trim();
+        event.target.value = ""; 
+
+        if (gameMode) {
+            fetch("/game_command", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ game: gameMode, command })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.output) {
+                    const output = document.getElementById("output");
+                    output.textContent += `\n> ${command}\n${data.output}`;
+                    output.scrollTop = output.scrollHeight; 
+
+                    
+                    if (data.game_over) {
+                        gameMode = null;
+                        document.getElementById("outputInput").style.display = "none";
+                    }
+                }
+            });
+        } else {
+            document.getElementById("output").textContent += `\nUnknown command: ${command}`;
+        }
+    }
+}
+document.getElementById("outputInput").style.display = "none";
+</script>
+</body>
+</html>

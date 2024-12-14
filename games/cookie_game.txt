@@ -1,0 +1,14 @@
+set flour 0
+set sugar 0
+set cookies 0
+
+loop 5 add flour flour 1; show "Collected flour";
+loop 3 add sugar sugar 1; show "Collected sugar";
+
+show "Mixing ingredients..."
+add dough flour sugar
+show "Baking cookies..."
+add cookies dough 1
+
+show "You baked cookies: ";
+show cookies

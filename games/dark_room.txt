@@ -1,0 +1,6 @@
+set health 100
+set torch 1
+show "You are in a dark room."
+
+loop 3 subtract health health 10; show "You lost health!"; show health
+show "Game Over!" if health <= 0
