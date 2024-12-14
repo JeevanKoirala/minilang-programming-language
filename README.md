@@ -1,5 +1,6 @@
 PLEASE READ IT TILL LAST AND THEN JUDGE PLEASE.
 key features of this project:
+This is a online compiler that runs on my own programming language called minilang made through python.
 1.You can use show <text> to print things..
 2.to get input you guys can use getinp function
 3.it can do simple mathmatical operations too 
